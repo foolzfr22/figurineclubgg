@@ -28,6 +28,15 @@ export default function AdminReviews() {
 
   useEffect(() => {
     fetchReviews();
+
+    const channel = supabase
+      .channel('admin-reviews')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reviews' }, () => {
+        fetchReviews();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const filtered = useMemo(() => {

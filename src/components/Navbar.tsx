@@ -85,8 +85,13 @@ export default function Navbar() {
   ];
 
   const isActive = (path: string) => {
-    if (path === '/') return location.pathname === '/';
-    return location.pathname === path.split('?')[0];
+    if (path === '/') return location.pathname === '/' && !location.search;
+    const [pathname, search] = path.split('?');
+    const linkSearch = search ? `?${search}` : '';
+    if (linkSearch) {
+      return location.pathname === pathname && location.search === linkSearch;
+    }
+    return location.pathname === pathname && !location.search;
   };
 
   return (
@@ -116,16 +121,20 @@ export default function Navbar() {
               <Link
                 key={link.path}
                 to={link.path}
-                className="relative px-2.5 xl:px-3 py-2 rounded-lg text-sm font-medium transition-colors group whitespace-nowrap"
+                className="relative px-2.5 xl:px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ease-out group whitespace-nowrap"
               >
-                <span className={`relative z-10 transition-colors ${isActive(link.path) ? 'text-primary-600 dark:text-primary-400' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'}`}>
+                <span className={`relative z-10 transition-colors duration-300 ${isActive(link.path) ? 'text-primary-600 dark:text-primary-400' : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100'}`}>
                   {link.label}
                 </span>
                 {isActive(link.path) && (
                   <motion.div
                     layoutId="nav-underline"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary-500 rounded-full"
                   />
+                )}
+                {!isActive(link.path) && (
+                  <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary-500 rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out origin-center" />
                 )}
               </Link>
             ))}

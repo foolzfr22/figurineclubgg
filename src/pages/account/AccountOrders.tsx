@@ -10,7 +10,7 @@ import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/types';
 import { formatPrice, formatDate } from '@/lib/utils';
 import UIMediaRenderer from '@/components/UIMediaRenderer';
 
-const CANCELLABLE_STATUSES = ['pending', 'confirmed', 'processing'];
+const CANCELLABLE_STATUSES = ['pending', 'confirmed', 'payment_verified', 'printing', 'painting', 'quality_check', 'packaging', 'ready_to_ship'];
 
 export default function AccountOrders() {
   const { user } = useAuth();
@@ -30,6 +30,29 @@ export default function AccountOrders() {
       setOrders((data as Order[]) ?? []);
       setLoading(false);
     })();
+
+    const channel = supabase
+      .channel('user-orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `user_id=eq.${user!.id}` }, (payload) => {
+        setOrders((prev) => {
+          if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as Order;
+            return prev.map((o) => (o.id === updated.id ? { ...o, ...updated } : o));
+          }
+          if (payload.eventType === 'INSERT') {
+            const inserted = payload.new as Order;
+            if (!prev.find((o) => o.id === inserted.id)) return [inserted, ...prev];
+          }
+          if (payload.eventType === 'DELETE') {
+            const deleted = payload.old as Order;
+            return prev.filter((o) => o.id !== deleted.id);
+          }
+          return prev;
+        });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [user]);
 
   const handleRequestCancellation = async (orderId: string) => {
@@ -101,7 +124,7 @@ export default function AccountOrders() {
                 ))}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {order.order_items?.length ?? 0} item(s)
+                    {order.order_items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0} {(order.order_items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0) === 1 ? 'Item' : 'Items'}
                   </p>
                   {order.estimated_delivery && (
                     <p className="text-xs text-slate-500 flex items-center gap-1">

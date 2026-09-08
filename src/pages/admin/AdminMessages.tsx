@@ -23,6 +23,15 @@ export default function AdminMessages() {
 
   useEffect(() => {
     fetchMessages();
+
+    const channel = supabase
+      .channel('admin-messages')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+        fetchMessages();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const unreadCount = messages.filter((m) => !m.is_read).length;
@@ -62,6 +71,33 @@ export default function AdminMessages() {
         prev.map((m) => (m.id === selected.id ? { ...m, admin_reply: reply.trim() } : m))
       );
       setSelected((prev) => (prev ? { ...prev, admin_reply: reply.trim() } : prev));
+
+      // Attempt to send email via edge function
+      try {
+        const { error: fnError } = await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'message_reply',
+            to: selected.email,
+            subject: `Re: ${selected.subject ?? 'Your message'}`,
+            body: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+  <h2 style="color: #6366f1;">Figure Club</h2>
+  <p>Hi ${selected.name},</p>
+  <p>Thank you for reaching out. Here is our response to your message:</p>
+  <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin: 16px 0;">
+    <p style="white-space: pre-wrap; margin: 0;">${reply.trim()}</p>
+  </div>
+  <p style="color: #64748b; font-size: 14px;">— The Figure Club Team</p>
+</div>`,
+          },
+        });
+        if (fnError) {
+          toast('Reply saved, but email could not be sent (email service may not be configured)', 'info');
+        } else {
+          toast('Reply sent to customer email', 'success');
+        }
+      } catch {
+        toast('Reply saved, but email could not be sent', 'info');
+      }
     }
     setSaving(false);
   };
@@ -199,7 +235,7 @@ export default function AdminMessages() {
                   <Send className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Reply'}
                 </button>
                 <p className="text-xs text-slate-400 mt-2">
-                  Note: Replies are saved to the database. Connect an email service to send them automatically.
+                  Replies are saved to the database and emailed to the customer when the email service is configured.
                 </p>
               </div>
             </div>
