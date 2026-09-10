@@ -107,11 +107,27 @@ export default function Navbar() {
         <nav className="h-14 flex items-center justify-between gap-2 px-3 sm:px-5">
           {/* Logo - always left, never shrinks */}
           <Link to="/" className="flex items-center gap-2 flex-shrink-0 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-lg shadow-primary-500/30 flex-shrink-0">
+            {settings?.logo_url ? (
+              <img
+                src={settings.logo_url}
+                alt={settings?.business_name || 'Duckling Dukes'}
+                className="h-8 sm:h-9 w-auto rounded-lg object-contain flex-shrink-0"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  img.style.display = 'none';
+                  const fallback = img.nextElementSibling as HTMLElement | null;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 items-center justify-center shadow-lg shadow-primary-500/30 flex-shrink-0"
+              style={{ display: settings?.logo_url ? 'none' : 'flex' }}
+            >
               <Package className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             <span className="font-bold text-base sm:text-lg tracking-tight hidden xs:block sm:block truncate">
-              {settings?.business_name || 'Figure Club'}
+              {settings?.business_name || 'Duckling Dukes'}
             </span>
           </Link>
 
@@ -143,10 +159,10 @@ export default function Navbar() {
           {/* Right side actions - always visible, never overflow */}
           <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
             {/* Search */}
-            <div ref={searchRef} className="relative">
+            <div ref={searchRef} className="relative flex items-center">
               <button
                 onClick={() => setSearchOpen(!searchOpen)}
-                className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center"
                 aria-label="Search"
               >
                 <Search className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -205,7 +221,7 @@ export default function Navbar() {
                 href={settings.discord_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-1.5 sm:p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors hidden md:block"
+                className="p-1.5 sm:p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors hidden md:flex items-center"
                 aria-label="Discord"
               >
                 <DiscordIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[#5865F2]" />
@@ -216,7 +232,7 @@ export default function Navbar() {
             {user && (
               <Link
                 to="/account/wishlist"
-                className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors hidden sm:block"
+                className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors hidden sm:flex items-center"
                 aria-label="Wishlist"
               >
                 <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -226,7 +242,7 @@ export default function Navbar() {
             {/* Cart - always visible */}
             <Link
               to="/cart"
-              className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative"
+              className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative flex items-center"
               aria-label="Cart"
             >
               <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -246,7 +262,7 @@ export default function Navbar() {
               {user ? (
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0"
+                  className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0 flex items-center"
                   aria-label="Account"
                 >
                   {user.user_metadata?.avatar_url ? (
@@ -260,7 +276,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   to="/login"
-                  className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center"
                   aria-label="Login"
                 >
                   <User className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -306,7 +322,7 @@ export default function Navbar() {
             {/* Hamburger - only on mobile/tablet */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="lg:hidden p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center"
               aria-label="Menu"
             >
               {mobileOpen ? <X className="w-4 h-4 sm:w-5 sm:h-5" /> : <Menu className="w-4 h-4 sm:w-5 sm:h-5" />}

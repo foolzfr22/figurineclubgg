@@ -12,7 +12,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 const defaultSettings: Settings = {
   id: 1,
-  business_name: 'Figure Club',
+  business_name: 'Duckling Dukes',
   logo_url: null,
   favicon_url: null,
   banner_url: null,
