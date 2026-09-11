@@ -22,26 +22,10 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              {settings?.logo_url ? (
-                <img
-                  src={settings.logo_url}
-                  alt={settings?.business_name || 'Duckling Dukes'}
-                  className="h-10 w-auto rounded-lg object-contain"
-                  onError={(e) => {
-                    const img = e.currentTarget;
-                    img.style.display = 'none';
-                    const fallback = img.nextElementSibling as HTMLElement | null;
-                    if (fallback) fallback.style.display = 'flex';
-                  }}
-                />
-              ) : null}
-              <div
-                className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 items-center justify-center shadow-lg shadow-primary-500/30"
-                style={{ display: settings?.logo_url ? 'none' : 'flex' }}
-              >
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
                 <Package className="w-5 h-5 text-white" />
               </div>
-              <span className="font-bold text-lg">{settings?.business_name || 'Duckling Dukes'}</span>
+              <span className="font-bold text-lg">{settings?.business_name || 'Figure Club'}</span>
             </Link>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-sm mb-6">
               {settings?.footer_text || 'Premium resin anime and gaming figures. Hand-crafted collectibles for passionate collectors.'}

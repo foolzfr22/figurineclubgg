@@ -1,18 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowRight, Sparkles, TrendingUp, Shield, Truck, Award, Heart,
   Star, ChevronRight, Instagram, Gift, MessageCircle, Palette,
   Trophy, Megaphone, Vote, Image as ImageIcon, Rocket,
+  ShoppingBag, Zap, ShieldCheck, Package,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { Product, Review } from '@/types';
 import ProductCard from '@/components/ProductCard';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, getEffectivePrice, getDiscountPercent } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 import { useSettings } from '@/contexts/SettingsContext';
-import ResinPrinter3D from '@/components/ResinPrinter3D';
+import { useCart } from '@/contexts/CartContext';
+import BuyNowModal from '@/components/BuyNowModal';
 
 function DiscordIcon({ className }: { className?: string }) {
   return (
@@ -22,17 +24,27 @@ function DiscordIcon({ className }: { className?: string }) {
   );
 }
 
+const trustBadges = [
+  { icon: Palette, text: 'Hand Painted' },
+  { icon: Shield, text: 'Premium Resin' },
+  { icon: Package, text: 'Secure Packaging' },
+  { icon: Truck, text: 'Fast Shipping' },
+];
+
 export default function Home() {
   const [featured, setFeatured] = useState<Product[]>([]);
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [limitedEditions, setLimitedEditions] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [trending, setTrending] = useState<Product[]>([]);
+  const [heroProduct, setHeroProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<(Review & { profiles?: { full_name: string | null } | null })[]>([]);
   const [loading, setLoading] = useState(true);
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const { toast } = useToast();
   const { settings } = useSettings();
+  const { addItem } = useCart();
+  const [buyNowOpen, setBuyNowOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -59,6 +71,22 @@ export default function Home() {
         bestData = (newest as Product[]) ?? [];
       }
 
+      // Determine hero product: best seller > featured > newest
+      let hero: Product | null = null;
+      if (bestData.length > 0) hero = bestData[0];
+      else if ((feat.data as Product[])?.length) hero = (feat.data as Product[])[0];
+      else {
+        const { data: newestSingle } = await supabase
+          .from('products')
+          .select('*, category:categories(*), product_images(*)')
+          .eq('is_hidden', false)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        hero = (newestSingle as Product) ?? null;
+      }
+
+      setHeroProduct(hero);
       setFeatured((feat.data as Product[]) ?? []);
       setBestSellers(bestData);
       setLimitedEditions((limited.data as Product[]) ?? []);
@@ -85,6 +113,17 @@ export default function Home() {
     }
   };
 
+  const handleHeroAddToCart = async () => {
+    if (!heroProduct) return;
+    await addItem(heroProduct, 1);
+    toast('Added to cart', 'success');
+  };
+
+  const handleHeroBuyNow = () => {
+    if (!heroProduct) return;
+    setBuyNowOpen(true);
+  };
+
   const features = [
     { icon: Award, title: 'Premium Quality', desc: 'Hand-crafted resin figures with museum-grade paint finishes' },
     { icon: Shield, title: 'Secure Packaging', desc: 'Each figure ships in custom-fit protective packaging' },
@@ -102,6 +141,16 @@ export default function Home() {
     { icon: Megaphone, text: 'Announcements' },
     { icon: Vote, text: 'Vote on Future Products' },
   ];
+
+  const heroProductPrice = useMemo(() => {
+    if (!heroProduct) return 0;
+    return getEffectivePrice(heroProduct.price, heroProduct.discount_price);
+  }, [heroProduct]);
+
+  const heroDiscount = useMemo(() => {
+    if (!heroProduct) return 0;
+    return getDiscountPercent(heroProduct.price, heroProduct.discount_price);
+  }, [heroProduct]);
 
   return (
     <div>
@@ -143,18 +192,121 @@ export default function Home() {
               </div>
             </motion.div>
 
-            {/* Right: 3D Resin Printer Animation */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="relative flex items-center justify-center"
-            >
-              <ResinPrinter3D />
-            </motion.div>
+            {/* Right: Featured Best Seller Card */}
+            {heroProduct && (
+              <motion.div
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.7, delay: 0.2 }}
+                className="relative perspective-1000"
+              >
+                {/* Soft radial light behind figure */}
+                <div className="absolute inset-0 bg-gradient-radial from-primary-400/20 via-transparent to-transparent rounded-full blur-3xl scale-110" />
+
+                <motion.div
+                  whileHover={{ y: -6 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  className="relative glass-strong rounded-3xl p-5 sm:p-6 shadow-2xl shadow-primary-500/10 overflow-hidden"
+                >
+                  {/* Glass reflection */}
+                  <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                    <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-white/10 via-transparent to-transparent rotate-45 translate-y-[-100%] hover:translate-y-[200%] transition-transform duration-1000" />
+                  </div>
+
+                  {/* Blue glow */}
+                  <div className="absolute -inset-0.5 bg-gradient-to-br from-primary-500/10 via-accent-500/5 to-primary-500/10 rounded-3xl blur-md -z-10" />
+
+                  {/* Best Seller Badge */}
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="badge bg-orange-500 text-white shadow-lg text-xs sm:text-sm">
+                      🔥 Best Seller
+                    </span>
+                    <span className="text-xs text-slate-500">{heroProduct.review_count} reviews</span>
+                  </div>
+
+                  {/* Product Image */}
+                  <Link to={`/product/${heroProduct.slug}`} className="block relative aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-4 group">
+                    {heroProduct.product_images?.[0]?.image_url ? (
+                      <img
+                        src={heroProduct.product_images[0].image_url}
+                        alt={heroProduct.name}
+                        loading="eager"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <Package className="w-16 h-16" />
+                      </div>
+                    )}
+                    {heroDiscount > 0 && (
+                      <span className="absolute top-3 left-3 badge bg-red-500 text-white shadow-lg">
+                        -{heroDiscount}%
+                      </span>
+                    )}
+                  </Link>
+
+                  {/* Product Info */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                      <span className="text-sm font-medium">{heroProduct.rating.toFixed(1)}</span>
+                      <span className="text-xs text-slate-500">({heroProduct.review_count})</span>
+                    </div>
+                    <h3 className="font-bold text-lg sm:text-xl line-clamp-1">
+                      {heroProduct.name}
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                      {heroProduct.description}
+                    </p>
+                    <div className="flex items-baseline gap-2 pt-1">
+                      <span className="text-2xl font-bold">{formatPrice(heroProductPrice)}</span>
+                      {heroDiscount > 0 && (
+                        <span className="text-sm text-slate-400 line-through">{formatPrice(heroProduct.price)}</span>
+                      )}
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex gap-2 pt-3">
+                      <button
+                        onClick={handleHeroAddToCart}
+                        disabled={heroProduct.stock === 0}
+                        className="ripple-btn flex-1 py-2.5 sm:py-3 rounded-xl bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                      >
+                        <ShoppingBag className="w-4 h-4" /> Add to Cart
+                      </button>
+                      <button
+                        onClick={handleHeroBuyNow}
+                        disabled={heroProduct.stock === 0}
+                        className="ripple-btn px-4 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-accent-500 to-primary-600 text-white text-sm font-medium hover:from-accent-600 hover:to-primary-700 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                      >
+                        <Zap className="w-4 h-4" /> Buy Now
+                      </button>
+                    </div>
+
+                    {/* Trust Badges */}
+                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+                      {trustBadges.map((badge) => (
+                        <div key={badge.text} className="flex items-center gap-1.5">
+                          <badge.icon className="w-3.5 h-3.5 text-primary-500 flex-shrink-0" />
+                          <span className="text-xs text-slate-600 dark:text-slate-400">{badge.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
           </div>
         </div>
       </section>
+
+      <BuyNowModal
+        product={buyNowOpen ? heroProduct : null}
+        quantity={1}
+        giftWrap={false}
+        customPaint=""
+        onClose={() => setBuyNowOpen(false)}
+      />
 
       {/* Categories Strip */}
       <section className="section-padding py-8 sm:py-12">
@@ -245,9 +397,9 @@ export default function Home() {
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#5865F2] flex items-center justify-center mx-auto mb-5 sm:mb-6 shadow-xl shadow-indigo-500/30">
               <DiscordIcon className="w-8 h-8 sm:w-9 sm:h-9 text-white" />
             </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">Join the Duckling Dukes Community</h2>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">Join the Figure Club Community</h2>
             <p className="text-base sm:text-lg text-slate-200 mb-8 max-w-2xl mx-auto">
-              Duckling Dukes is more than just a marketplace. Become part of our growing anime, gaming, manga, and collectible community.
+              Figure Club is more than just a marketplace. Become part of our growing anime, gaming, manga, and collectible community.
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8 sm:mb-10 max-w-2xl mx-auto">
               {communityBenefits.map((benefit) => (
@@ -273,7 +425,7 @@ export default function Home() {
       <section className="section-padding py-12 sm:py-16">
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3">Why Choose Us</h2>
-          <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">The Duckling Dukes difference</p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">The Figure Club difference</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {features.map((feature, i) => (
