@@ -157,6 +157,12 @@ export default function Home() {
       {/* Hero */}
       <section className="relative min-h-[85vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary-50/50 via-white to-accent-50/50 dark:from-dark-300 dark:via-dark-200 dark:to-dark-400" />
+        {settings?.banner_url && (
+          <div className="absolute inset-0 opacity-30">
+            <img src={settings.banner_url} alt="" className="w-full h-full object-cover" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-br from-dark-300/80 via-dark-200/70 to-dark-400/80" />
         <div className="absolute inset-0 opacity-40">
           <div className="absolute top-20 left-10 w-72 h-72 bg-primary-300/30 dark:bg-primary-500/10 rounded-full mix-blend-multiply filter blur-3xl animate-blob" />
           <div className="absolute top-40 right-10 w-72 h-72 bg-accent-300/30 dark:bg-accent-500/10 rounded-full mix-blend-multiply filter blur-3xl animate-blob" style={{ animationDelay: '4s' }} />

@@ -10,7 +10,6 @@ import { UIMediaProvider } from '@/contexts/UIMediaContext';
 import { MusicProvider } from '@/contexts/MusicContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import WhatsAppButton from '@/components/WhatsAppButton';
 import DiscordButton from '@/components/DiscordButton';
 import FloatingMusicPlayer from '@/components/FloatingMusicPlayer';
 import ScrollToTop from '@/components/ScrollToTop';
@@ -158,7 +157,6 @@ function AnimatedRoutes() {
         </AnimatePresence>
       </Suspense>
       {!isAdmin && <Footer />}
-      {!isAdmin && <WhatsAppButton />}
       {!isAdmin && <DiscordButton />}
       {!isAdmin && <FloatingMusicPlayer />}
     </>

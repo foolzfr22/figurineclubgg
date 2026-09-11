@@ -99,17 +99,20 @@ export default function Navbar() {
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className={`fixed top-2 left-0 right-0 z-50 mx-auto w-full max-w-6xl transition-all duration-300 ${
+        className={`fixed top-2 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-6xl transition-all duration-300 ${
           scrolled ? 'glass-strong shadow-2xl shadow-black/5' : 'glass shadow-lg'
-        } rounded-2xl mx-3 sm:mx-4`}
-        style={{ width: 'calc(100% - 1.5rem)' }}
+        } rounded-2xl`
       >
         <nav className="h-14 flex items-center justify-between gap-2 px-3 sm:px-5">
           {/* Logo - always left, never shrinks */}
           <Link to="/" className="flex items-center gap-2 flex-shrink-0 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-lg shadow-primary-500/30 flex-shrink-0">
-              <Package className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-            </div>
+            {settings?.logo_url ? (
+              <img src={settings.logo_url} alt={settings?.business_name || 'Figure Club'} className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover flex-shrink-0" />
+            ) : (
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-lg shadow-primary-500/30 flex-shrink-0">
+                <Package className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              </div>
+            )}
             <span className="font-bold text-base sm:text-lg tracking-tight hidden xs:block sm:block truncate">
               {settings?.business_name || 'Figure Club'}
             </span>
@@ -260,7 +263,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   to="/login"
-                  className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0"
                   aria-label="Login"
                 >
                   <User className="w-4 h-4 sm:w-5 sm:h-5" />
